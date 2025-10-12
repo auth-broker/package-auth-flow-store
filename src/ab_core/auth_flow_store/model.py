@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any
 
 from pydantic import AnyHttpUrl, AnyUrl, SecretStr, field_validator
 from sqlalchemy import JSON, Column, String
@@ -28,8 +27,7 @@ class AuthFlow(
     SQLModel,
     table=True,
 ):
-    """
-    Versioned, explicit config for a Browserless CDP-based OAuth2/OIDC flow.
+    """Versioned, explicit config for a Browserless CDP-based OAuth2/OIDC flow.
     (Only first-class fields; no provider-specific extras in query params.)
     """
 

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -30,7 +29,7 @@ class AuthFlowStore(BaseModel):
         redirect_uri: str,
         authorize_url: str,
         token_url: str,
-        client_secret: Optional[str] = None,  # only for STANDARD clients
+        client_secret: str | None = None,  # only for STANDARD clients
         # Impersonation / flow
         idp_prefix: str,
         timeout: int = 60,
@@ -159,8 +158,7 @@ class AuthFlowStore(BaseModel):
         is_active: bool | None = None,
         db_session: AsyncSession,
     ) -> AuthFlow | None:
-        """
-        Explicit field updates only. If a parameter is None, it is NOT changed.
+        """Explicit field updates only. If a parameter is None, it is NOT changed.
         Still flush-only; callers control the transaction boundary.
         """
         row = await db_session.get(AuthFlow, flow_id)
