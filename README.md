@@ -1,6 +1,6 @@
 <div align="center">
 
-# Python Package Template
+# Auth Flow Store Package
 
 The template repository for creating python packages, shared across auth-broker.
 
@@ -20,23 +20,6 @@ The template repository for creating python packages, shared across auth-broker.
 [![CI](https://github.com/auth-broker/package-template/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/auth-broker/package-template/actions/workflows/ci.yaml)
 
 </div>
-
-______________________________________________________________________
-
-## Template Checklist
-
-- \[ \] Rename module `src/ab_core/template` ->
-  `src/ab_core/your_package_name`
-- \[ \] Rename tests module `src/ab_core/template` ->
-  `src/ab_core/your_package_name`
-- \[ \] Update `pyproject.toml`: `[project]` section based on your package name
-  / versioning etc.
-- \[ \] Update `README.md` references of `python-package-template` ->
-  `your-package-name`
-- \[ \] Add your pypi credentials as `HTTP_BASIC_PYPI_USERNAME` &
-  `HTTP_BASIC_PYPI_PASSWORD` repository variables / secrets respectively. These
-  will be need for the pypi publish cd workflow to succeed.
-- \[ \] Remove this section
 
 ______________________________________________________________________
 
@@ -139,7 +122,7 @@ command:
 **Using pip**:
 
 ```shell
-pip install python-package-template
+pip install ab-auth-flow-store
 ```
 
 **Using UV**
@@ -150,7 +133,7 @@ provide the full url. https://github.com/astral-sh/uv/issues/10140
 Add the dependency
 
 ```shell
-uv add python-package-template
+uv add ab-auth-flow-store
 ```
 
 **Using poetry**:
@@ -158,7 +141,7 @@ uv add python-package-template
 Then run the following command to install the package:
 
 ```shell
-poetry add python-package-template
+poetry add ab-auth-flow-store
 ```
 
 ### How tos
@@ -202,4 +185,4 @@ We publish to PyPI using Github releases. Steps are as follows:
    will trigger the `publish` workflow. In the Release window, type in the
    version number and it will prompt to create a new tag.
 1. Verify the release in
-   [PyPI](https://pypi.org/project/python-package-template/)
+   [PyPI](https://pypi.org/project/auth-flow-store/)
