@@ -1,4 +1,4 @@
-"""Tests for AuthFlowStore."""
+"""Tests for AuthFlowStore (updated fields)."""
 
 import uuid
 
@@ -16,10 +16,22 @@ async def test_auth_flow_store_crud(tmp_database_async_session):
 
     # ── create ────────────────────────────────────────────────
     flow1 = await service.create(
+        # issuer basics
         name="wemoney-login",
-        authorize_url="https://login.wemoney.com/authorize?client_id=abc",
-        idp_prefix="https://login.wemoney.com",
+        # OIDC client
+        client_id="247ffs2l6um22baifm5o7nhkgh",
+        redirect_uri="https://app.wemoney.com.au/oauth_redirect",
+        authorize_url="https://wemoney.auth.ap-southeast-2.amazoncognito.com/oauth2/authorize",
+        token_url="https://wemoney.auth.ap-southeast-2.amazoncognito.com/oauth2/token",
+        # impersonation / flow
+        idp_prefix="https://wemoney.auth.ap-southeast-2.amazoncognito.com/oauth2/idpresponse",
         timeout=45,
+        # CDP / Browserless
+        cdp_endpoint="wss://browserless.example.com/?stealth=true",
+        cdp_headers={"x-test": "1"},
+        cdp_gui_base_url="https://browserless-gui.example.com",
+        browserless_base_url="https://browserless.example.com",
+        # metadata
         created_by=uuid.uuid4(),
         is_active=True,
         db_session=session,
@@ -28,9 +40,22 @@ async def test_auth_flow_store_crud(tmp_database_async_session):
 
     assert isinstance(flow1, AuthFlow)
     assert flow1.name == "wemoney-login"
-    assert flow1.authorize_url == "https://login.wemoney.com/authorize?client_id=abc"
-    assert flow1.idp_prefix == "https://login.wemoney.com"
+    assert flow1.client_id == "247ffs2l6um22baifm5o7nhkgh"
+    assert flow1.redirect_uri == "https://app.wemoney.com.au/oauth_redirect"
+    assert (
+        flow1.authorize_url
+        == "https://wemoney.auth.ap-southeast-2.amazoncognito.com/oauth2/authorize"
+    )
+    assert flow1.token_url == "https://wemoney.auth.ap-southeast-2.amazoncognito.com/oauth2/token"
+    assert (
+        flow1.idp_prefix
+        == "https://wemoney.auth.ap-southeast-2.amazoncognito.com/oauth2/idpresponse"
+    )
     assert flow1.timeout == 45
+    assert flow1.cdp_endpoint.startswith("wss://browserless.example.com")
+    assert flow1.cdp_headers == {"x-test": "1"}
+    assert flow1.cdp_gui_base_url == "https://browserless-gui.example.com"
+    assert flow1.browserless_base_url == "https://browserless.example.com"
     assert flow1.is_active is True
     assert flow1.created_at is not None
     assert flow1.updated_at is not None
@@ -52,10 +77,22 @@ async def test_auth_flow_store_crud(tmp_database_async_session):
 
     # ── create second flow (same name, inactive) ──────────────
     flow2 = await service.create(
+        # issuer basics
         name="wemoney-login",
-        authorize_url="https://login.wemoney.com/authorize?client_id=xyz",
-        idp_prefix="https://login.wemoney.com",
+        # OIDC client (change a value to differentiate rows)
+        client_id="DIFFERENT_CLIENT_ID",
+        redirect_uri="https://app.wemoney.com.au/oauth_redirect",
+        authorize_url="https://wemoney.auth.ap-southeast-2.amazoncognito.com/oauth2/authorize",
+        token_url="https://wemoney.auth.ap-southeast-2.amazoncognito.com/oauth2/token",
+        # impersonation / flow
+        idp_prefix="https://wemoney.auth.ap-southeast-2.amazoncognito.com/oauth2/idpresponse",
         timeout=30,
+        # CDP / Browserless
+        cdp_endpoint="wss://browserless.example.com/?stealth=true",
+        cdp_headers=None,
+        cdp_gui_base_url=None,
+        browserless_base_url="https://browserless.example.com",
+        # metadata
         created_by=uuid.uuid4(),
         is_active=False,
         db_session=session,
@@ -64,6 +101,7 @@ async def test_auth_flow_store_crud(tmp_database_async_session):
 
     assert flow2.id != flow1.id
     assert flow2.is_active is False
+    assert flow2.client_id == "DIFFERENT_CLIENT_ID"
 
     # ── list by name (no filter) ──────────────────────────────
     all_flows = await service.list_by_name(
@@ -73,20 +111,24 @@ async def test_auth_flow_store_crud(tmp_database_async_session):
         limit=10,
         offset=0,
     )
-    # We now have two rows with the same name
     assert isinstance(all_flows, list)
     assert len(all_flows) == 2
     assert {f.id for f in all_flows} == {flow1.id, flow2.id}
 
     # ── list by name (active / inactive filters) ──────────────
-    active_only = await service.list_by_name(name="wemoney-login", db_session=session, is_active=True)
-    inactive_only = await service.list_by_name(name="wemoney-login", db_session=session, is_active=False)
-    # Exactly one active (flow1) and one inactive (flow2)
+    active_only = await service.list_by_name(
+        name="wemoney-login", db_session=session, is_active=True
+    )
+    inactive_only = await service.list_by_name(
+        name="wemoney-login", db_session=session, is_active=False
+    )
     assert {f.id for f in active_only} == {flow1.id}
     assert {f.id for f in inactive_only} == {flow2.id}
 
     # ── flip is_active on flow2 ───────────────────────────────
-    toggled = await service.set_active(flow_id=flow2.id, is_active=True, db_session=session)
+    toggled = await service.set_active(
+        flow_id=flow2.id, is_active=True, db_session=session
+    )
     await session.refresh(toggled)
     await session.refresh(flow1)  # refresh flow1 to read current is_active
 
@@ -104,5 +146,7 @@ async def test_auth_flow_store_crud(tmp_database_async_session):
     assert flow1.is_active is False
 
     # Active-only should now return only flow2
-    active_only_after = await service.list_by_name(name="wemoney-login", db_session=session, is_active=True)
+    active_only_after = await service.list_by_name(
+        name="wemoney-login", db_session=session, is_active=True
+    )
     assert {f.id for f in active_only_after} == {flow2.id}
