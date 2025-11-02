@@ -1,6 +1,11 @@
 <div align="center">
 
+**Note: this package was archived as we use the model schema from package-token-issuer, and is defined directly within the service-token-issuer-store.**
+
+---
+
 # Auth Flow Store Package
+
 
 The template repository for creating python packages, shared across auth-broker.
 
